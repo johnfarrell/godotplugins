@@ -16,4 +16,4 @@ config/icon="res://icon.svg"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/treeexporter/plugin.cfg")
+enabled=PackedStringArray("res://addons/auto_id_increment/plugin.cfg", "res://addons/treeexporter/plugin.cfg")

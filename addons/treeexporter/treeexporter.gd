@@ -36,7 +36,7 @@ func _on_generate_button_pressed():
 
 	# 1. Traverse the tree and build a Godot Dictionary of relationships
 	var hierarchy_dict = {}
-	_collect_relationships(start_node, hierarchy_dict)
+	_collect_relationships(start_node, -1, hierarchy_dict)
 
 	# 2. Convert the Dictionary into a TypeScript constant string
 	var ts_string = "/**\n"
@@ -64,27 +64,21 @@ func _on_generate_button_pressed():
 	save_file(output_path, ts_string)
 
 # Recursively walks the scene tree, collecting nodes that have "sdk_id" metadata.
-func _collect_relationships(node: Node, dict: Dictionary):
-	# Check if the current node has an SDK ID. If not, we can't process it or its children.
-	if not "ObjId" in node:
-		# If it's the root node, we can still process its direct children
-		if node != get_editor_interface().get_edited_scene_root():
-			return
-			
-	var parent_id = node.ObjId
-	var children_with_ids = []
+func _collect_relationships(node: Node, nearest_parent_id: int, dict: Dictionary):
+	var current_node_id = -1
+	if "ObjId" in node:
+		current_node_id = node.ObjId
+
+	if nearest_parent_id != -1 and current_node_id != -1:
+		if not dict.has(nearest_parent_id):
+			dict[nearest_parent_id] = []
+		dict[nearest_parent_id].append(current_node_id)
+		
+	var next_parent_id_for_children = current_node_id if current_node_id != -1 else nearest_parent_id
 
 	for child in node.get_children():
-		if "ObjId" in child:
-			var child_id = child.ObjId
-			children_with_ids.append(child_id)
-			
 			# Continue the traversal down the tree
-			_collect_relationships(child, dict)
-	
-	# Only add an entry if the parent has a valid ID and has children with IDs
-	if parent_id != -1 and not children_with_ids.is_empty():
-		dict[parent_id] = children_with_ids
+			_collect_relationships(child, next_parent_id_for_children, dict)
 
 
 # Helper to show messages to the user in the editor
